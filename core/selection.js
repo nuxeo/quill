@@ -156,8 +156,13 @@ class Selection {
     }
   }
 
+  getNativeSelection() {
+    // HACK: some browsers put getSelection() on the ShadowRoot and some don't so test for it on rootNode
+    return typeof this.root.getRootNode().getSelection === 'function' ? this.root.getRootNode().getSelection() : document.getSelection();
+  }
+
   getNativeRange() {
-    let selection = document.getSelection();
+    let selection = this.getNativeSelection();
     if (selection == null || selection.rangeCount <= 0) return null;
     let nativeRange = selection.getRangeAt(0);
     if (nativeRange == null) return null;
@@ -174,7 +179,8 @@ class Selection {
   }
 
   hasFocus() {
-    return document.activeElement === this.root;
+    var activeElement = this.root.getRootNode().activeElement || document.activeElement;
+    return !!(activeElement === this.root);
   }
 
   normalizedToRange(range) {
@@ -237,10 +243,9 @@ class Selection {
       [node, offset] = leaf.position(offset, i !== 0);
       args.push(node, offset);
     });
-    if (args.length < 2) {
-      args = args.concat(args);
-    }
-    return args;
+    let start = Math.min(...indexes), end = Math.max(...indexes);
+    end = Math.min(end, this.scroll.length() - 1);
+    return [new Range(start, end-start), range];
   }
 
   scrollIntoView(scrollingContainer) {
@@ -268,7 +273,7 @@ class Selection {
     if (startNode != null && (this.root.parentNode == null || startNode.parentNode == null || endNode.parentNode == null)) {
       return;
     }
-    let selection = document.getSelection();
+    let selection = this.getNativeSelection();
     if (selection == null) return;
     if (startNode != null) {
       if (!this.hasFocus()) this.root.focus();
