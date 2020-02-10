@@ -3,7 +3,7 @@ import clone from 'clone';
 import equal from 'deep-equal';
 import Emitter from './emitter';
 import logger from './logger';
-import { SHADOW_SELECTIONCHANGE, getRange, addRange, usePolyfill } from './shadow-selection-polyfill';
+import { eventName, getRange, addRange, usePolyfill } from './shadow-selection-polyfill';
 
 const debug = logger('quill:selection');
 
@@ -29,8 +29,8 @@ class Selection {
     this.handleComposition();
     this.handleDragging();
     if (!usePolyfill) {
-      this.emitter.listenDOM(SHADOW_SELECTIONCHANGE, document, () => {
-        if (!this.mouseDown && !this.composing) {
+      this.emitter.listenDOM(eventName, document, () => {
+        if (!this.mouseDown) {
           setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
         }
       });
